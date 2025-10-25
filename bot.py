@@ -202,5 +202,5 @@ if __name__ == "__main__":
     render_url = os.getenv('RENDER_EXTERNAL_URL') or os.getenv('RENDER_EXTERNAL_HOSTNAME')
     if not render_url:
         raise Exception("No se detectó RENDER_EXTERNAL_URL. Configura correctamente el webhook en Render.")
-    bot.set_webhook(url=f"https://{render_url}/{TOKEN}")
+    bot.set_webhook(url=f"https://cherry-assistant-bot-2-0.onrender.com//{TOKEN}")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
