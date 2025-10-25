@@ -3,17 +3,23 @@ from telebot import types
 from flask import Flask, request
 import os
 
-# 🔐 TOKEN de tu bot (se configura en Render como variable de entorno)
-TOKEN = os.getenv("8350135404:AAFvClHUwuMMy2yReawp7qml1tdjzfZ3cDo")
+# ============================================================
+# 🔐 TOKEN del bot (Render Environment Variable)
+# ============================================================
+# Acepta BOT_TOKEN o TOKEN
+TOKEN = os.getenv("BOT_TOKEN") or os.getenv("TOKEN")
+if not TOKEN:
+    raise Exception("❌ Bot token is not defined. Configure BOT_TOKEN or TOKEN in Render environment variables.")
+
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-# 🌍 Idioma por defecto de cada usuario
+# 🌍 Idioma por defecto por usuario
 user_language = {}
 
-# ======================
+# ============================================================
 # 🧠 FUNCIONES PRINCIPALES
-# ======================
+# ============================================================
 
 def send_welcome(message):
     """Mensaje de bienvenida con botones principales"""
@@ -39,10 +45,9 @@ def send_welcome(message):
         markup.add(b)
     bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode="Markdown")
 
-
-# ======================
+# ============================================================
 # 📜 RESPUESTAS DEL MENÚ PRINCIPAL
-# ======================
+# ============================================================
 
 def handle_info(message):
     """📍 AQUÍ PEGAS TUS TEXTOS DE INFORMACIÓN PRINCIPAL"""
@@ -98,11 +103,8 @@ def handle_payments(message):
     lang = user_language.get(message.chat.id, "es")
     if lang == "es":
         markup = types.InlineKeyboardMarkup()
-        
-        # 💳 BOTONES DE OPCIONES DE PAGO
         btn1 = types.InlineKeyboardButton("💸 Pagar por Yape / Plin", callback_data="pay_yape")
         markup.add(btn1)
-
         text = (
             "💳 *Métodos de pago disponibles:*\n\n"
             "Selecciona una opción para continuar con tu pago 💖"
@@ -111,7 +113,6 @@ def handle_payments(message):
         markup = types.InlineKeyboardMarkup()
         btn1 = types.InlineKeyboardButton("💸 Pay via Yape / Plin", callback_data="pay_yape")
         markup.add(btn1)
-
         text = (
             "💳 *Available payment methods:*\n\n"
             "Choose a payment method 💖"
@@ -131,10 +132,9 @@ def change_language(message):
         bot.send_message(message.chat.id, "🌎 Language changed to *Spanish* 🇪🇸", parse_mode="Markdown")
     send_welcome(message)
 
-
-# ======================
+# ============================================================
 # 🎯 CALLBACKS DE BOTONES INLINE
-# ======================
+# ============================================================
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -152,10 +152,9 @@ def callback_query(call):
             parse_mode="Markdown"
         )
 
-
-# ======================
+# ============================================================
 # 📥 RECEPCIÓN DE MENSAJES
-# ======================
+# ============================================================
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -180,10 +179,9 @@ def handle_message(message):
             parse_mode="Markdown"
         )
 
-
-# ======================
+# ============================================================
 # 🌐 WEBHOOK PARA RENDER
-# ======================
+# ============================================================
 
 @app.route('/')
 def index():
@@ -195,12 +193,14 @@ def webhook():
     bot.process_new_updates([update])
     return "ok", 200
 
-
-# ======================
+# ============================================================
 # 🚀 EJECUCIÓN PRINCIPAL
-# ======================
+# ============================================================
 
 if __name__ == "__main__":
     bot.remove_webhook()
-    bot.set_webhook(url=f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}")
-    app.run(host="0.0.0.0", port=10000)
+    render_url = os.getenv('RENDER_EXTERNAL_URL') or os.getenv('RENDER_EXTERNAL_HOSTNAME')
+    if not render_url:
+        raise Exception("No se detectó RENDER_EXTERNAL_URL. Configura correctamente el webhook en Render.")
+    bot.set_webhook(url=f"https://{render_url}/{TOKEN}")
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
